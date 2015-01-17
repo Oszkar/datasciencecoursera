@@ -6,10 +6,13 @@ See the instructions in the original readme below. I've included a subset of the
 
 #### date
 
-December 2014 - *[ongoing]*
+December 2014
 
 #### author
+
 Oszkar Jozsa - [website] [site] - [twitter] [twitter]
+
+You can find all of my coursework [here](https://github.com/Oszkar/datasciencecoursera)
 
 # Original readme
 

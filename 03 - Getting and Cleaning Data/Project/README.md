@@ -5,10 +5,13 @@ A repo for Coursera's Data Science Signature Track's programming assignment.
 
 ##### Date
 
-December 2014 - *[ongoing]*
+December 2014
 
-##### author
+##### Author
+
 Oszkar Jozsa - [website] [site] - [twitter] [twitter]
+
+You can find all of my coursework [here](https://github.com/Oszkar/datasciencecoursera)
 
 ## Tasks
 

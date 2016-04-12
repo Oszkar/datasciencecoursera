@@ -16,11 +16,11 @@ The Data Scientist’s Toolbox|November 2014|[folder](01 - The Data Scientist Tool
 R Programming|November 2014|[folder](02 - R programming)|[link](https://www.coursera.org/account/accomplishments/records/rjBLwGC6334X2zMY)
 Getting and Cleaning Data|December 2014|[folder](03 - Getting and Cleaning Data)|[link](https://www.coursera.org/account/accomplishments/records/qBJLUJZbYPTjURC6)
 Exploratory Data Analysis|December 2014|[folder](04 - Exploratory Data Analysis)|[link](https://www.coursera.org/account/accomplishments/records/YY7wXX3Xch3EQb4b)
-Reproducible Research|January 2015|[Separate repo](https://github.com/Oszkar/RepData_PeerAssessment1)|
+Reproducible Research|January 2015|[folder](05 - Reproducible Research)|[link](https://www.coursera.org/account/accomplishments/records/wBATt3UuRuCJmKAD)
 Statistical Inference|January 2015| [soon]
-Regression Models| Februery 2015 |[Separate repo](https://github.com/Oszkar/regressionmodelsclass)
+Regression Models| February 2015 |[Separate repo](https://github.com/Oszkar/regressionmodelsclass)
 Practical Machine Learning| February 2015 |[Separate repo](https://github.com/Oszkar/practicalmachinelearningclass)
-Developing Data Products| Februery 2015 |[Separate repo](https://github.com/Oszkar/developingdataproductsclass)
+Developing Data Products| February 2015 |[Separate repo](https://github.com/Oszkar/developingdataproductsclass)
 Data Science Capstone| ? |
 
 ### Thank you note

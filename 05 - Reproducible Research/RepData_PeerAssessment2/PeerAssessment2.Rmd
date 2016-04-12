@@ -1,0 +1,263 @@
+---
+output: html_document
+---
+
+#National Oceanic and Atmospheric Administration's storm database analysis
+
+Peer Assessent 2 submission for the Reproducible Research class.
+
+##Submission details
+
+-------------------------------------------------------------
+Author       Date                   GitHub
+------------ ---------------------- -------------------------
+Oszkar Jozsa February, 2015         [[link][github]]
+-------------------------------------------------------------
+
+##Desciprtion
+
+Your data analysis must address the following questions:
+
+- Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+- Across the United States, which types of events have the greatest economic consequences?
+
+Consider writing your report as if it were to be read by a government or municipal manager who might be responsible for preparing for severe weather events and will need to prioritize resources for different types of events. However, there is no need to make any specific recommendations in your report.
+
+#Synopsys
+
+In this report, I will investigate the most dangerous environmental disasters, based on the 
+National Oceanic and Atmospheric Administration (NOAA) database, which was collected between 1950 and 2011.
+
+Using simple bar charts, I will show which type of disasters cost most lives, cause most injuries 
+and cause the most damage to properties and crops.
+
+#Data Processing
+
+The code below requires the data to be in the working directory. The gzipped verison of the data can be downloaded from [here][data].
+
+##Reading the data
+
+First, set up the environment and save the session info.
+
+```{r}
+library(data.table)
+library(ggplot2)
+library(stringr)
+library(gridExtra)
+sessionInfo()
+```
+
+Next, load the data and have a quick look at it.
+
+```{r cache=TRUE}
+data <- read.csv("repdata-data-StormData.csv", header = TRUE, stringsAsFactors = FALSE)
+head(data)
+str(data)
+```
+
+Finally, let's check what kind of `EVTYPE`s are there in the data.
+
+```{r}
+length(unique(data$EVTYPE))
+```
+
+That is almost a 1000 diffent type of events. Some of which are similar but different 
+subcategories for example thunderstorms with different wind speeds or hails with different ice sizes. 
+Some of them are really similar, e.g.: `heat wave`, `heat waves`, `excessive heat`, `extreme heat`.
+There are even typos ("thundeerstorm", "tunderstorm") and mislabeled data ("Summary of May 22 am"). 
+Also, there are some categories that are the same but with different letter case (e.g.: "wind" and "WIND").
+
+```{r}
+# upper case everything
+data$EVTYPE <- toupper(data$EVTYPE)
+# trim leading whitespace
+data$EVTYPE <- str_trim(data$EVTYPE)
+# replace some common subcategories / errors using grepl
+data$EVTYPE[grepl("THUNDERSTORM", data$EVTYPE)] <- "THUNDERSTORM"
+data$EVTYPE[grepl("THUNDEERSTORM", data$EVTYPE)] <- "THUNDERSTORM"
+data$EVTYPE[grepl("TUNDERSTORM", data$EVTYPE)] <- "THUNDERSTORM"
+data$EVTYPE[grepl("TSTM", data$EVTYPE)] <- "THUNDERSTORM"
+data$EVTYPE[grepl("HAIL", data$EVTYPE)] <- "HAIL"
+data$EVTYPE[grepl("TORNADO", data$EVTYPE)] <- "TORNADO"
+data$EVTYPE[grepl("SUMMARY", data$EVTYPE)] <- "MISLABELED"
+data$EVTYPE[grepl("HEAT", data$EVTYPE)] <- "HEAT"
+data$EVTYPE[grepl("HIGH WIND", data$EVTYPE)] <- "HIGH WIND"
+```
+
+Let's look at the results:
+
+```{r}
+length(unique(data$EVTYPE))
+```
+
+A bit better but still over 600 types. Further narrowing would require deeper knowledge in 
+environmental disasters and in the methods of collecting this data. 
+In later graphs, we'll only use a few of these (top20).
+
+<sub>Note: I've listed the `EVTYPE`s in the [appendix](#appendix1) below so that it won't clutter the document here.</sub>
+
+##Preprocessing the data
+
+There are two column, `PROPDMGEXP` and `CROPDMGEXP`, that contains the exponents but not in numeric format 
+(instead, in text i.e.: B for billion). Convert it to numeric format and save it to a variable 
+with a `SUM` suffix (using a new variable is convenient since we can fill it up with zeros and not worry about `NA`s)
+
+```{r cache=TRUE, message=F}
+data$PROPDMGEXPNUM <- rep(0, nrow(data))
+data$PROPDMGEXPNUM[data$PROPDMGEXP == "B"] <- 9
+data$PROPDMGEXPNUM[data$PROPDMGEXP == "M"] <- 6
+data$PROPDMGEXPNUM[data$PROPDMGEXP == "K"] <- 3
+data$PROPDMGEXPNUM[data$PROPDMGEXP == "H"] <- 2
+data$CROPDMGEXPNUM <- rep(0, nrow(data))
+data$CROPDMGEXPNUM[data$CROPDMGEXP == "B"] <- 9
+data$CROPDMGEXPNUM[data$CROPDMGEXP == "M"] <- 6
+data$CROPDMGEXPNUM[data$CROPDMGEXP == "K"] <- 3
+data$CROPDMGEXPNUM[data$CROPDMGEXP == "H"] <- 2
+```
+
+And since we're here, let's calculate the actual damage values.
+
+```{r cache=TRUE}
+data$actualPropDmg <- data$PROPDMG * 10 ^ data$PROPDMGEXPNUM
+data$actualCropDmg <- data$CROPDMG * 10 ^ data$CROPDMGEXPNUM
+```
+
+Also convert the dates from string to actual date variables
+
+```{r cache=TRUE}
+data$BGN_DATE <- strptime(data$BGN_DATE, "%m/%d/%Y %H:%M:%S")
+data$END_DATE <- strptime(data$END_DATE, "%m/%d/%Y %H:%M:%S")
+```
+
+##Most harmful events
+
+Aggregate the 20 most harmful event types by both fatalities and injuries. Since 
+fatalities are not comparable to injuries, these are handled separately.
+
+```{r fig.height=10, fig.width=10}
+fatal <- aggregate(data$FATALITIES, by = list(data$EVTYPE), "sum")
+# get the first 20 (descending)
+fatal <- fatal[order(-fatal$x), ][1:20,]
+colnames(fatal) <- c("EvType", "No_of_fatalities")
+# factorize EvType so ggplot can use it
+fatal$EvType <- factor(fatal$EvType, levels = fatal$EvType)
+
+inj <- aggregate(data$INJURIES, by = list(data$EVTYPE), "sum")
+# get the first 20 (descending
+inj <- inj[order(-inj$x), ][1:20,]
+colnames(inj) <- c("EvType", "No_of_injuries")
+# factorize EvType so ggplot can use it
+inj$EvType <- factor(inj$EvType, levels = inj$EvType)
+
+p1 <- ggplot(fatal, aes(x = EvType, y = No_of_fatalities))  + 
+  geom_bar(stat = "identity", fill = "deepskyblue", las = 3)  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(y = "Number of deaths") +
+  labs(x = "Disaster type") +
+  labs(title = "Deaths per type of disaster")
+
+p2 <- ggplot(inj, aes(x = EvType, y = No_of_injuries))  + 
+  geom_bar(stat = "identity", fill = "deepskyblue", las = 3)  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  labs(y = "Number of injuries") +
+  labs(x = "Disaster type") +
+  labs(title = "Injuries per type of disaster")
+
+# plot the two charts using gridExtra
+grid.arrange(p1, p2, ncol = 1)
+```
+
+In both cases, the tornadoes are the most harmful. Might be interestring to check how
+much more harmful they are than any other disasters.
+
+Fatalities:
+
+```{r}
+fatal$No_of_fatalities[1]
+sum(fatal$No_of_fatalities[2:20])
+```
+
+Injuries:
+
+```{r}
+inj$No_of_injuries[1]
+sum(inj$No_of_injuries[2:20])
+```
+
+There are about twice as many injuries from tornadoes than from all the other disasters 
+in the top20 most harmful ones. Also, the number of deaths is comparable, though less extreme than 
+the injuries.
+
+##Most costful events
+
+We'll do the same as before but now for cost of property and crop damage.
+
+```{r fig.height=12, fig.width=10}
+prop <- aggregate(data$actualPropDmg, by = list(data$EVTYPE), "sum")
+# save to overall for later use
+overall <- prop
+prop <- prop[order(-prop$x), ][1:20,]
+colnames(prop) <- c("EvType", "Property_damage")
+colnames(overall) <- c("EvType", "Damage")
+prop$EvType <- factor(prop$EvType, levels = prop$EvType)
+
+crop <- aggregate(data$actualCropDmg, by = list(data$EVTYPE), "sum")
+# add up to overall
+# we can do this since both is ordered by EvType
+overall$Damage <- overall$Damage + crop$x
+crop <- crop[order(-crop$x), ][1:20,]
+colnames(crop) <- c("EvType", "Crop_damage")
+crop$EvType <- factor(crop$EvType, levels = crop$EvType)
+
+
+p3 <- ggplot(prop, aes(x = EvType, y = Property_damage))  + 
+  geom_bar(stat = "identity", fill = "deepskyblue", las = 3)  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(y = "Cost of damage (US dollars)") +
+  labs(x = "Disaster type") +
+  labs(title = "Cost of damage to properties by type of disaster")
+
+p4 <- ggplot(crop, aes(x = EvType, y = Crop_damage))  + 
+  geom_bar(stat = "identity", fill = "deepskyblue", las = 3)  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(y = "Cost of damage (US dollars)") +
+  labs(x = "Disaster type") +
+  labs(title = "Cost of damage to crops by type of disaster")
+
+grid.arrange(p3, p4, ncol = 1)
+```
+
+In terms of property damage, still the tornado is the most costful disaster. However, 
+hail is the most cosful in terms of crops, by far.
+
+And finally let's check the combined damage on properties and crops:
+
+```{r fig.height=8, fig.width=10}
+overall <- overall[order(-overall$Damage), ][1:20,]
+
+p5 <- ggplot(overall, aes(x = EvType, y = Damage))  + 
+  geom_bar(stat = "identity", fill = "deepskyblue", las = 3)  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(y = "Cost of damage (US dollars)") +
+  labs(x = "Disaster type") +
+  labs(title = "Cost of damage (ovarall) by type of disaster")
+p5
+```
+
+#Results
+
+A short research showed us which environmental disasters are the most costful. 
+In terms of injuries, tornadoes are the worst by far. In terms of property or crop damage, 
+floods are the worst, followed by hurricanes and tornadoes. However, only in terms of crop damage, 
+droughts are worse than floods.
+
+#Appendix
+
+##<a id="appendix1"></a>List of EVTYPEs
+
+```{r}
+unique(data$EVTYPE)
+```
+
+[data]:https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2
+[github]:https://github.com/Oszkar/

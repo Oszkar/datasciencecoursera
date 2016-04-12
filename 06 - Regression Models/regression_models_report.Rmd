@@ -1,0 +1,177 @@
+---
+title: "Automatic or Manual? A Fuel Consuption Analysis"
+author: "Oszkar Jozsa"
+output: pdf_document
+geometry: margin=1.2cm
+fontsize: 10pt
+---
+
+# Summary
+
+In this paper, I will show that, in general, cars with automatic transmission have worse fuel economy 
+compared to the manual transmission ones. However, my analysis also will show that the worse mileage 
+performance is determined by other factors also, not only the type of transmission the car has.
+
+After a quick analysis in the first section, I will construct a linaer prediction model 
+that predicts the fuel consumption based on those factors.
+
+# Analysis
+
+## Data processing
+
+First of all, let's load the data and have a quick look at it.
+
+```{r}
+library(ggplot2)
+data(mtcars)
+str(mtcars)
+```
+
+We have 32 observations. Our two important variables are `mpg` and `am`. First one is a numeric value 
+of the fuel consumption, second one is the gear shift type. [This site](http://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html) 
+tells us that 0 = automatic and 1 = manual.
+
+Lat's convert that numerical value into a factor:
+
+```{r}
+mtcars$am <- as.factor(mtcars$am)
+levels(mtcars$am) <- c("Automatic", "Manual")
+```
+
+## Exploratory analysis
+
+First of all, check if there is any difference between automatic and manual transmission with respect to MPG at all. 
+A boxplot can clearly visualize this for us.
+
+```{r}
+boxplot(mpg~am, data=mtcars,
+        xlab = "Transmission type",
+        ylab = "Miles / Gallon",
+        main = "Fuel consuption by transmission type")
+```
+
+Vehicles with automatic transmission seem to have lower MPG, or in other words, they have worse fuel consumption.
+
+Another validation of this initial assumption is to break down these categories further. 
+It's a good intuition that engine displacement and weight can effect fuel consuption, we should check whether these parameters are 
+similar in case of automatic and manual transmissions.
+
+```{r}
+summary(mtcars[mtcars$am == "Automatic",]$disp)
+summary(mtcars[mtcars$am == "Manual",]$disp)
+summary(mtcars[mtcars$am == "Automatic",]$wt)
+summary(mtcars[mtcars$am == "Manual",]$wt)
+```
+
+It shows that automatic shift cars tend to have larger engine displacement and larger weight, too. 
+This suggests that the larger fuel consumption of automatic shift cars might not caused by the shift type itself.
+Of course, other factors can effect fuel consuption but most likely we have to include these variables 
+also on our final predicition model. Appendix 1 and Appendix 2 show the displacement and weight 
+versus MPG per transmission type diagrams.
+
+One final thing we can check to make sure the data is valid: it doesn't seem to have outliers and 
+it seems to be roughly normally distributed. So this is not skewing our data either. 
+See Appendix 3 for the distribution analysis.
+
+## Regression model
+
+### Simple regression
+
+The simplest model is to use a single variable regression, using the transmission type, `am`.
+
+```{r}
+singlelm <- lm(mpg~am, data=mtcars)
+summary(singlelm)
+```
+
+Turns out (unsurprisingly) that the single variable of the transmission type is not that great of a predictor 
+of fuel consumption. We can see that using an automatic transmission, our fuel consumption tends to be 7 MPG higher 
+compared to manual transmission. However, the R^2 value tells us that this model only explains 36% of the variance. 
+Also, the squared error seems to be high, however, p-value is under 0.05.
+
+### Multivariare regression
+
+I will use a 2-way stepwise selection to build the model. Details of stepwise regression: 
+[WikiPedia](http://en.wikipedia.org/wiki/Stepwise_regression), 
+[stack exchange](http://stats.stackexchange.com/questions/69452/how-does-stepwise-regression-work), 
+[Coastal Carolina University tutorial](http://ww2.coastal.edu/kingw/statistics/R-tutorials/multregr.html).
+
+```{r}
+stepmodel = step(lm(data=mtcars, mpg~.), trace=0, steps=10000)
+summary(stepmodel)
+```
+
+So it seems that the transmission type is only the third best predictor variable in the final model. 
+Both weight and acceleration are much better predictors 
+(the latter one strongly relates to displacement size and cylinder number).
+
+```{r}
+multiplelm <- lm(mpg ~ wt + qsec + am, data=mtcars)
+summary(multiplelm)
+```
+
+In the final model, the R^2 value is up to 85% and the p-value decreased well belo 0.05.
+
+# Results
+
+We have found a multiple variable regression model that covers 85% of the variable in the fuel consumption, 
+based on the `mtcars` dataset.
+
+The three variables in the model:
+
+- wt - the weight of the car
+- qsec - acceleration time (0.25 mile)
+- am - transmission type (automatic/manual)
+
+The performance of this model compared to a single variable model:
+
+```{r}
+rmse_single <- sqrt(sum(singlelm$residuals ^ 2) / nrow(mtcars))
+rsquared_single <- summary(singlelm)$r.squared
+rmse_multiple <- sqrt(sum(multiplelm$residuals ^ 2) / nrow(mtcars))
+rsquared_multiple <- summary(multiplelm)$r.squared
+perf <- matrix(c(rmse_single, rmse_multiple, rsquared_single, rsquared_multiple), nrow=2, ncol=2)
+rownames(perf) <- c("single variable", "multiple variable")
+colnames(perf) <- c("RMSE", "R^2")
+perf
+```
+
+# Appendix
+
+## Appendix 1 - Engine displacement
+
+```{r}
+dispplot <- qplot(x=disp, y=mpg, data=mtcars, colour=am, 
+                  main="MPG per Engine displacement and Transmission type", 
+                  xlab="Engine displacement", 
+                  ylab="Miles / Gallon")
+dispplot + labs(colour="Transmission type")
+```
+
+It can be seen that even though automatic shift cars have bigger engines and bigger fuel consuption also.
+
+## Appendix 2 - Vehicle weight
+
+```{r}
+wtplot <- qplot(x=wt, y=mpg, data=mtcars, colour=am, 
+                  main="MPG per Vehicle weight and Transmission type", 
+                  xlab="Weight (lb/1000)", 
+                  ylab="Miles / Gallon")
+wtplot + labs(colour="Transmission type")
+```
+
+It can be seen that even though automatic shift cars are heavier and have bigger fuel consumption.
+
+## Appendix 3 - MPG distribution
+
+```{r}
+mpg <- mtcars$mpg
+h <- hist(mpg, breaks=11, xlab="Miles / Gallon",  main="Histogram of Miles / Gallon")
+abline(v = mean(mpg), col="red", lwd=2)
+abline(v = median(mpg), col="green", lwd=2)
+xfit <- seq(min(mpg), max(mpg), length=40)
+yfit <- dnorm(xfit, mean=mean(mpg), sd=sd(mpg))
+yfit <- yfit * diff(h$mids[1:2]) * length(mpg)
+lines(xfit, yfit, col="blue", lwd=2)
+legend(x="topright", legend=c("Mean","Median","Normal curve"), col=c("red", "green","blue"), bty="n", lwd=1)
+```

@@ -1,0 +1,111 @@
+---
+output:
+  pdf_document: default
+geometry: margin=1.1cm
+fontsize: 10pt
+---
+
+#Statistical Inference Course Project - Part 1
+
+-------------------------------------------------------------
+Author       Date                   GitHub
+------------ ---------------------- -------------------------
+Oszkar Jozsa February, 2015         [[link][github]]
+-------------------------------------------------------------
+
+##Overview
+
+###Description
+
+Illustrate via simulation and associated explanatory text the properties of the distribution of the mean of 40 exponentials.  You should
+
+- Show the sample mean and compare it to the theoretical mean of the distribution.
+- Show how variable the sample is (via variance) and compare it to the theoretical variance of the distribution.
+- Show that the distribution is approximately normal.
+
+###Solution
+
+I will save a simple data set of 1000 simulations into a matrix and compare it to a theoretical normal distribution 
+using some plots (base and ggplot) and simple calculations.
+
+##Solution
+
+###Simulations
+
+First, we set up the parameters `number`, `lambda` and `n`. Then we'll set the seed for reproducibility.
+(also, ggplot is loaded here as we'll need it later)
+
+```{r}
+library(ggplot2)
+
+number <- 1000
+lambda <- 0.2
+n <- 40
+
+set.seed(543)
+```
+
+Next, the simulation is done with the parameters above and saved into `simulation` (1000-by-40 matrix).
+We also calculate the rowmeans here.
+
+```{r}
+simulation <- matrix(rexp(number * n, rate=lambda), number, n)
+means <- rowMeans(simulation)
+```
+
+We create a simple histogram to visualize the result of the simulation.
+Also, a red line is added for displaying the mean of the simulation.
+
+```{r fig.height=5, fig.width=10}
+hist(means, xlab = "Rowmeans of simulated matrix")
+abline(v = mean(means), col = "red", lwd = 2)
+legend(x = "topright", legend = c("Mean of simulation"), col = c("red"), bty = "n", lwd = 2)
+
+```
+
+###Sample Mean versus Theoretical Mean
+
+```{r echo=TRUE}
+mean <- mean(means)
+theoretical_mean <- 1 / lambda
+mean
+theoretical_mean
+```
+
+Simulated (measured) mean is very close to the theoreticcal mean. 
+We could get even closer by increasing `number` (more simulation).
+
+###Sample Variance versus Theoretical Variance
+
+```{r}
+variance <- var(means)
+theoretical_variance <- (1 / lambda) ^ 2 / n
+variance
+theoretical_variance
+```
+
+Variance differs a bit more than the mean did, but still close to the theoretical one.
+
+###Distribution
+
+The histogram below shows how close the distribution is to normal. Blue line is a density estimation of 
+our measured data. Red line is a true normal distribution.
+
+```{r fig.height=5, fig.width=10, message=F}
+ggplot(data.frame(means), aes(x = means)) + 
+      geom_histogram(aes(y=..density..)) + geom_density(colour = "blue", size = 1) +
+      stat_function(fun = dnorm, args = list(mean = theoretical_mean, sd = theoretical_variance), color = "red", size = 1) +
+      labs(y = "Frequency") + labs(title = "Distribution: simulated vs. normal")
+```
+
+Lastly, a QQ plot to compare measured and theoretical distribution (see [this][wiki] article). 
+Lines are almost exacly lined up which shows us that the measured is very close to the theoretical one. 
+A 45 degree `abline` represents the theoretical QQ line.
+
+```{r fig.height=4.5, fig.width=10}
+qqnorm(scale(means)); qqline(scale(means), col = "blue"); abline(0, 1, col = "red")
+legend(x = "topleft", legend = c("Simulation", "Theoretical"), col = c("blue", "red"), bty = "n", lwd = 2)
+```
+
+[wiki]:http://en.wikipedia.org/wiki/Q-Q_plot
+[github]:https://github.com/Oszkar/

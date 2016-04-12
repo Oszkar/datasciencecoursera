@@ -1,0 +1,90 @@
+---
+output:
+  pdf_document: default
+geometry: margin=1.1cm
+fontsize: 10pt
+---
+
+#Statistical Inference Course Project - Part 2
+
+-------------------------------------------------------------
+Author       Date                   GitHub
+------------ ---------------------- -------------------------
+Oszkar Jozsa February, 2015         [[link][github]]
+-------------------------------------------------------------
+
+##Overview
+
+###Description
+
+Now in the second portion of the class, we're going to analyze the ToothGrowth data in the R datasets package. 
+
+- Load the ToothGrowth data and perform some basic exploratory data analyses 
+- Provide a basic summary of the data.
+- Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
+- State your conclusions and the assumptions needed for your conclusions. 
+
+##Solution
+
+###Exploratory data analysis
+
+We can find a descriptive info about the "The Effect of Vitamin C on Tooth Growth in Guinea Pigs" dataset [here][desc]. It says: 
+"The response is the length of odontoblasts (teeth) in each of 10 guinea pigs at each of three dose levels of Vitamin C (0.5, 1, and 2 mg) with each of two delivery methods (orange juice or ascorbic acid)."
+
+Let's look at the content of `ToothGrowth`!
+
+```{r}
+library(ggplot2)
+library(datasets)
+data(ToothGrowth)
+head(ToothGrowth)
+str(ToothGrowth)
+summary(ToothGrowth)
+```
+
+So we have 2 different supplements, `VC` and `OJ` and three different doses, `0.5`, `1.0`, `2.0` (mg). 
+These two (supplement and dosis) have effect on the length, saved in the `len` column. 
+We can visualize the relations between these using a boxplot.
+
+```{r}
+boxplot(len ~ supp * dose, data = ToothGrowth, ylab="Tooth length", main="ToothGrowth data supplements * dosis")
+```
+
+Now, setting aside the dosage, we'll look at the effectiveness of the two supplements.
+
+```{r}
+OJ = c(mean(ToothGrowth[ToothGrowth$supp == "VC",]$len), sd(ToothGrowth[ToothGrowth$supp == "VC",]$len)) 
+VC = c(mean(ToothGrowth[ToothGrowth$supp == "OJ",]$len), sd(ToothGrowth[ToothGrowth$supp == "OJ",]$len)) 
+data.frame(OJ, VC, row.names = c("mean", "variance"))
+```
+
+Based on both the full box plot and on the means-variances of the two different supplements, 
+we can conclude that the Orange Juice (`OJ`) supplement is better.
+
+###Hypothesis test
+
+T distribution will be used for hypothesis testing.
+
+```{r}
+t.test(len ~ supp, data = ToothGrowth)
+```
+
+We won't reject the null hypothesis as the P-value is above 0.05 and the confidence interval contains 0. 
+This means that the effect of the two supplements fo differ.
+
+Now test the doses (as dosage pairs):
+
+```{r}
+t.test(len ~ dose, data = subset (ToothGrowth, dose %in% c(0.5, 1.0)))
+t.test(len ~ dose, data = subset (ToothGrowth, dose %in% c(0.5, 2.0)))
+t.test(len ~ dose, data = subset (ToothGrowth, dose %in% c(1,0, 2.0)))
+```
+
+###Conclusions
+
+The quick research of the `ToothGrowth` data showed us that both the dosage and the supplement type plays a role in 
+tooth growth in gueina pigs. Orange juice or ascorbic acid delivery method proves to be more effective than Vitamin C. Also, bigger 
+dosage helps growth (on the examined [0.5..2.0] interval).
+
+[desc]:https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html
+[github]:https://github.com/Oszkar/

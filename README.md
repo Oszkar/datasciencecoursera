@@ -6,7 +6,7 @@ Here you can find all my coursework completed during the Data Science specializa
 
 ### Author
 
-Oszkar Jozsa - [website] [site] - [twitter] [twitter] - [linkedin] [linkedin]
+Oszkar Jozsa - [website] [site] - [linkedin] [linkedin]
 
 ### Completed courses and links
 
@@ -14,7 +14,7 @@ I finished the 10-course specialization track April 2015. My finaly specializati
 
 Course name | Completion date | Link | Certificate
 ------------|-----------------|------|------------
-The Data Scientist’s Toolbox|November 2014|[folder](01 - The Data Scientist Toolbox)|[link](https://www.coursera.org/account/accomplishments/records/gxAVGK6EYvAtCu2v)
+The Data Scientistâ€™s Toolbox|November 2014|[folder](01 - The Data Scientist Toolbox)|[link](https://www.coursera.org/account/accomplishments/records/gxAVGK6EYvAtCu2v)
 R Programming|November 2014|[folder](02 - R programming)|[link](https://www.coursera.org/account/accomplishments/records/rjBLwGC6334X2zMY)
 Getting and Cleaning Data|December 2014|[folder](03 - Getting and Cleaning Data)|[link](https://www.coursera.org/account/accomplishments/records/qBJLUJZbYPTjURC6)
 Exploratory Data Analysis|December 2014|[folder](04 - Exploratory Data Analysis)|[link](https://www.coursera.org/account/accomplishments/records/YY7wXX3Xch3EQb4b)
@@ -29,6 +29,5 @@ Data Science Capstone| March-April 2015 |[Separate repo](https://github.com/Oszk
 
 A big thanks to professors Roger D. Peng, Brian Caffo, Jeff Leek, the [Johns Hopkins University](http://www.jhu.edu) and the [Coursera](https://www.coursera.org) team for their great work making this specialization available for everyone!
 
-[site]:http://jozsaoszkar.com
-[twitter]:https://twitter.com/wasteproduct/
-[linkedin]:linkedin.com/in/oszkarjozsa/
+[site]:http://oszkar.me
+[linkedin]: https://linkedin.com/in/oszkarjozsa
